@@ -8,4 +8,6 @@ test("isInInt32", async () => {
   expect(isInInt32(-2147483648)).toBe(true);
   expect(isInInt32(2147483648)).toBe(false);
   expect(isInInt32(-2147483649)).toBe(false);
+  expect(isInInt32(1.5)).toBe(false);
+  expect(isInInt32(NaN)).toBe(false);
 });
