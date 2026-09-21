@@ -20,4 +20,5 @@ export class InterpreterError extends Error {
 export type Location = {
   filePath: string;
   line: number;
+  offset: number;
 }
