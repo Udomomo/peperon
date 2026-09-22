@@ -9,10 +9,14 @@ export const tokenType = {
   // 優先度を表すトークン
   PRIORITY: "PRIORITY", 
 
+  // 数値を表すトークン。補助ノードのinitの値として使われる。
+  NUMBER: "NUMBER",
+
   // キーワード
   INPUT: "input",
   OUTPUT: "output",
   HELPER: "helper",
+  INIT: "init",
 
   EOL: "EOL",
   INVALID: "INVALID",
@@ -31,4 +35,5 @@ export const keywords: Map<string, TokenType> = new Map([
   ["input", tokenType.INPUT],
   ["output", tokenType.OUTPUT],
   ["node", tokenType.HELPER],
+  ["init", tokenType.INIT],
 ]);

@@ -7,6 +7,7 @@ describe("キーワード", () => {
     ["input", tokenType.INPUT],
     ["output", tokenType.OUTPUT],
     ["node", tokenType.HELPER],
+    ["init", tokenType.INIT],
   ] as const)("%sを抽出できること", ([keyword, expectedValue]) => {
     const lexer = new Lexer(keyword);
 
@@ -77,6 +78,17 @@ describe("エッジ", () => {
   });
 });
 
+describe("数値", () => {
+  test("数値を抽出できること", () => {
+    const lexer = new Lexer("12345");
+
+    const token1 = lexer.nextToken();
+    expect(token1.type).toBe(tokenType.NUMBER);
+    expect(token1.value).toBe("12345");
+    expect(token1.offset).toBe(0);
+  });
+});
+
 describe("EOL", () => {
   test("入力文字列の最後にEOLを抽出できること", () => {
     const lexer = new Lexer("->+");
@@ -85,7 +97,7 @@ describe("EOL", () => {
     const token1 = lexer.nextToken();
     expect(token1.type).toBe(tokenType.EOL);
     expect(token1.value).toBe("");
-    expect(token1.offset).toBe(2);
+    expect(token1.offset).toBe(3);
   });
 });
 
@@ -134,6 +146,31 @@ describe("複数種類のトークン", () => {
 
     expect(token4.type).toBe(tokenType.EOL);
     expect(token4.value).toBe("");
-    expect(token4.offset).toBe(9);
+    expect(token4.offset).toBe(10);
+  });
+
+  test("スペースなしで複数種類のトークンを抽出できること", () => {
+    const lexer = new Lexer("inputA@1");
+    
+    const token1 = lexer.nextToken();
+    const token2 = lexer.nextToken();
+    const token3 = lexer.nextToken();
+    const token4 = lexer.nextToken();
+
+    expect(token1.type).toBe(tokenType.INPUT);
+    expect(token1.value).toBe("input");
+    expect(token1.offset).toBe(0);
+
+    expect(token2.type).toBe(tokenType.NODE);
+    expect(token2.value).toBe("A");
+    expect(token2.offset).toBe(5);
+
+    expect(token3.type).toBe(tokenType.PRIORITY);
+    expect(token3.value).toBe("1");
+    expect(token3.offset).toBe(6);
+
+    expect(token4.type).toBe(tokenType.EOL);
+    expect(token4.value).toBe("");
+    expect(token4.offset).toBe(8);
   });
 });

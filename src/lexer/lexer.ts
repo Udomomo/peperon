@@ -24,6 +24,7 @@ export class Lexer {
    */
   readChar() {
     if (this.readPosition >= this.input.length) {
+      this.position = this.readPosition;
       this.char = Lexer.EOL;
     } else {
       this.char = this.getChar(this.input, this.readPosition);
@@ -72,6 +73,9 @@ export class Lexer {
         }
         else if (Lexer.LOWERCASE_REGEX.test(this.char)) {
           return this.readKeywordToken(this.char, offset);
+        }
+        else if (Lexer.DIGIT_REGEX.test(this.char)) {
+          return this.readNumberToken(offset);
         }
         else {
           return { type: tokenType.INVALID, value: this.char, offset };
@@ -124,5 +128,15 @@ export class Lexer {
     } else {
       return { type: tokenType.INVALID, value, offset };
     }
+  }
+
+  private readNumberToken(offset: number): Token {
+    let value = this.char;
+    while (Lexer.DIGIT_REGEX.test(this.peekChar())) {
+      this.readChar();
+      value += this.char;
+    }
+
+    return { type: tokenType.NUMBER, value, offset };
   }
 }
