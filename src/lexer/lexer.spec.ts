@@ -101,6 +101,27 @@ describe("EOL", () => {
   });
 });
 
+describe("コメント", () => {
+  test("コメントを抽出できること", () => {
+    const lexer = new Lexer("# This is a comment");
+
+    const token1 = lexer.nextToken();
+    expect(token1.type).toBe(tokenType.COMMENT);
+    expect(token1.value).toBe("");
+    expect(token1.offset).toBe(0);
+  });
+
+  test("行の途中からのコメントを抽出できること", () => {
+    const lexer = new Lexer("A # This is a comment");
+
+    lexer.nextToken();
+    const token1 = lexer.nextToken();
+    expect(token1.type).toBe(tokenType.COMMENT);
+    expect(token1.value).toBe("");
+    expect(token1.offset).toBe(2);
+  });
+});
+
 describe("スペース", () => {
   test("トークンの区切りにスペースがある場合は無視されること", () => {
     const lexer = new Lexer("A ->+ B");

@@ -61,6 +61,9 @@ export class Lexer {
     switch (this.char) {
       case Lexer.EOL:
         return { type: tokenType.EOL, value: "", offset };
+      case "#": {
+        return { type: tokenType.COMMENT, value: "", offset };
+      }
       case "-": {
         return this.readEdgeToken(offset);
       }

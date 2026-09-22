@@ -19,6 +19,7 @@ export const tokenType = {
   INIT: "init",
 
   EOL: "EOL",
+  COMMENT: "COMMENT",
   INVALID: "INVALID",
 } as const;
 
