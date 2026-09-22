@@ -12,7 +12,7 @@ export const tokenType = {
   // キーワード
   INPUT: "input",
   OUTPUT: "output",
-  HELPER: "node",
+  HELPER: "helper",
 
   EOL: "EOL",
   INVALID: "INVALID",
@@ -23,6 +23,7 @@ export type TokenType = (typeof tokenType)[keyof typeof tokenType];
 export interface Token {
   type: TokenType;
   value: string;
+  // トークンの開始位置（文字列の先頭からのオフセット）
   offset: number;
 }
 

@@ -36,7 +36,7 @@ export class Lexer {
    * 次の位置の文字を取得するだけで、charとpositionは更新しない。
    */
   peekChar(): string {
-    if (this.position >= this.input.length) {
+    if (this.readPosition >= this.input.length) {
       return Lexer.EOL;
     }
     return this.getChar(this.input, this.readPosition);
@@ -54,48 +54,51 @@ export class Lexer {
       this.readChar();
     } while (Lexer.SPACE_CHARS.has(this.char));
 
+    // tokenの開始位置をoffsetとして返すため、記録しておく。
+    const offset = this.position;
+
     switch (this.char) {
       case Lexer.EOL:
-        return { type: tokenType.EOL, value: "", offset: this.position };
+        return { type: tokenType.EOL, value: "", offset };
       case "-": {
-        return this.readEdgeToken();
+        return this.readEdgeToken(offset);
       }
       case "@": {
-        return this.readPriorityToken();
+        return this.readPriorityToken(offset);
       }
       default: {
         if (Lexer.UPPERCASE_REGEX.test(this.char)) {
-          return { type: tokenType.NODE, value: this.char, offset: this.position };
+          return { type: tokenType.NODE, value: this.char, offset };
         }
         else if (Lexer.LOWERCASE_REGEX.test(this.char)) {
-          return this.readKeywordToken(this.char);
+          return this.readKeywordToken(this.char, offset);
         }
         else {
-          return { type: tokenType.INVALID, value: this.char, offset: this.position };
+          return { type: tokenType.INVALID, value: this.char, offset };
         }
       }
     }
   }
 
-  private readEdgeToken(): Token {
+  private readEdgeToken(offset: number): Token {
     if (this.peekChar() === ">") {
       this.readChar();
 
       switch (this.peekChar()) {
         case "+":
           this.readChar();
-          return { type: tokenType.EDGE_ADD, value: "->+", offset: this.position };
+          return { type: tokenType.EDGE_ADD, value: "->+", offset };
         case "-":
           this.readChar();
-          return { type: tokenType.EDGE_SUB, value: "->-", offset: this.position };
+          return { type: tokenType.EDGE_SUB, value: "->-", offset };
         default:
-          return { type: tokenType.EDGE_ADD, value: `->${this.peekChar()}`, offset: this.readPosition };
+          return { type: tokenType.EDGE_ADD, value: `->${this.peekChar()}`, offset };
       }
     }
     return { type: tokenType.INVALID, value: this.peekChar(), offset: this.readPosition };
   }
 
-  private readPriorityToken(): Token {
+  private readPriorityToken(offset: number): Token {
     let value = "";
     while (Lexer.DIGIT_REGEX.test(this.peekChar())) {
       this.readChar();
@@ -103,12 +106,12 @@ export class Lexer {
     }
 
     if (value.length > 0) {
-      return { type: tokenType.PRIORITY, value, offset: this.position };
+      return { type: tokenType.PRIORITY, value, offset };
     }
-    return { type: tokenType.INVALID, value: this.peekChar(), offset: this.readPosition };
+    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, offset };
   }
 
-  private readKeywordToken(firstLetter: string): Token {
+  private readKeywordToken(firstLetter: string, offset: number): Token {
     let value = firstLetter;
     while (Lexer.LOWERCASE_REGEX.test(this.peekChar())) {
       this.readChar();
@@ -117,9 +120,9 @@ export class Lexer {
 
     const keywordType = keywords.get(value);
     if (keywordType !== undefined) {
-      return { type: keywordType, value, offset: this.position };
+      return { type: keywordType, value, offset };
     } else {
-      return { type: tokenType.INVALID, value, offset: this.position };
+      return { type: tokenType.INVALID, value, offset };
     }
   }
 }
