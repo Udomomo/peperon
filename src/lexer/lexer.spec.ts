@@ -88,12 +88,24 @@ describe("エッジ", () => {
 });
 
 describe("数値", () => {
-  test("数値を抽出できること", () => {
-    const lexer = new Lexer("12345");
+  test.for([
+    "12345",
+    "-1234",
+  ] as const)("整数%sを抽出できること", (input) => {
+    const lexer = new Lexer(input);
 
     const token1 = lexer.nextToken();
     expect(token1.type).toBe(tokenType.NUMBER);
-    expect(token1.value).toBe("12345");
+    expect(token1.value).toBe(input);
+    expect(token1.column).toBe(1);
+  });
+
+  test("無効な数値はINVALIDトークンになること", () => {
+    const lexer = new Lexer("-a");
+
+    const token1 = lexer.nextToken();
+    expect(token1.type).toBe(tokenType.INVALID);
+    expect(token1.value).toBe("-");
     expect(token1.column).toBe(1);
   });
 });

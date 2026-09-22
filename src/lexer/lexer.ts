@@ -65,7 +65,13 @@ export class Lexer {
         return { type: tokenType.COMMENT, value: "", column: column };
       }
       case "-": {
-        return this.readEdgeToken(column);
+        if (this.peekChar() === ">") {
+          return this.readEdgeToken(column);
+        }
+        else {
+          // 負の数値の可能性があるため、数値トークンとしての処理を試みる。
+          return this.readNumberToken(column);
+        }
       }
       case "@": {
         return this.readPriorityToken(column);
@@ -88,21 +94,17 @@ export class Lexer {
   }
 
   private readEdgeToken(column: number): Token {
-    if (this.peekChar() === ">") {
-      this.readChar();
-
-      switch (this.peekChar()) {
-        case "+":
-          this.readChar();
-          return { type: tokenType.EDGE_ADD, value: "->+", column: column };
-        case "-":
-          this.readChar();
-          return { type: tokenType.EDGE_SUB, value: "->-", column: column };
-        default:
-          return { type: tokenType.INVALID, value: `->${this.peekChar()}`, column: column };
-      }
+    this.readChar(); // '>'を読み飛ばす
+    switch (this.peekChar()) {
+      case "+":
+        this.readChar();
+        return { type: tokenType.EDGE_ADD, value: "->+", column: column };
+      case "-":
+        this.readChar();
+        return { type: tokenType.EDGE_SUB, value: "->-", column: column };
+      default:
+        return { type: tokenType.INVALID, value: `->${this.peekChar()}`, column: column };
     }
-    return { type: tokenType.INVALID, value: this.peekChar(), column: column };
   }
 
   private readPriorityToken(column: number): Token {
@@ -140,6 +142,10 @@ export class Lexer {
       value += this.char;
     }
 
+    // マイナス符号の後に数値が続かない場合は不正なトークンである。
+    if (value === "-") {
+      return { type: tokenType.INVALID, value, column: column };
+    }
     return { type: tokenType.NUMBER, value, column: column };
   }
 }
