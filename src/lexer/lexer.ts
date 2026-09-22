@@ -87,25 +87,25 @@ export class Lexer {
     }
   }
 
-  private readEdgeToken(offset: number): Token {
+  private readEdgeToken(column: number): Token {
     if (this.peekChar() === ">") {
       this.readChar();
 
       switch (this.peekChar()) {
         case "+":
           this.readChar();
-          return { type: tokenType.EDGE_ADD, value: "->+", column: offset };
+          return { type: tokenType.EDGE_ADD, value: "->+", column: column };
         case "-":
           this.readChar();
-          return { type: tokenType.EDGE_SUB, value: "->-", column: offset };
+          return { type: tokenType.EDGE_SUB, value: "->-", column: column };
         default:
-          return { type: tokenType.EDGE_ADD, value: `->${this.peekChar()}`, column: offset };
+          return { type: tokenType.INVALID, value: `->${this.peekChar()}`, column: column };
       }
     }
-    return { type: tokenType.INVALID, value: this.peekChar(), column: this.readPosition };
+    return { type: tokenType.INVALID, value: this.peekChar(), column: column };
   }
 
-  private readPriorityToken(offset: number): Token {
+  private readPriorityToken(column: number): Token {
     let value = "";
     while (Lexer.DIGIT_REGEX.test(this.peekChar())) {
       this.readChar();
@@ -113,9 +113,9 @@ export class Lexer {
     }
 
     if (value.length > 0) {
-      return { type: tokenType.PRIORITY, value, column: offset };
+      return { type: tokenType.PRIORITY, value, column: column };
     }
-    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, column: offset };
+    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, column: column };
   }
 
   private readKeywordToken(firstLetter: string, offset: number): Token {
@@ -133,13 +133,13 @@ export class Lexer {
     }
   }
 
-  private readNumberToken(offset: number): Token {
+  private readNumberToken(column: number): Token {
     let value = this.char;
     while (Lexer.DIGIT_REGEX.test(this.peekChar())) {
       this.readChar();
       value += this.char;
     }
 
-    return { type: tokenType.NUMBER, value, column: offset };
+    return { type: tokenType.NUMBER, value, column: column };
   }
 }

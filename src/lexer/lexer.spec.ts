@@ -76,6 +76,15 @@ describe("エッジ", () => {
     expect(token1.value).toBe("->-");
     expect(token1.column).toBe(1);
   });
+
+  test("無効なエッジはINVALIDトークンになること", () => {
+    const lexer = new Lexer("->*");
+
+    const token1 = lexer.nextToken();
+    expect(token1.type).toBe(tokenType.INVALID);
+    expect(token1.value).toBe("->*");
+    expect(token1.column).toBe(1);
+  });
 });
 
 describe("数値", () => {
