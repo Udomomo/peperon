@@ -55,33 +55,33 @@ export class Lexer {
       this.readChar();
     } while (Lexer.SPACE_CHARS.has(this.char));
 
-    // tokenの開始位置をoffsetとして返すため、記録しておく。
-    const offset = this.position;
+    // tokenの開始位置をcolumnとして返す。1始まりにするために+1する。
+    const column = this.position + 1;
 
     switch (this.char) {
       case Lexer.EOL:
-        return { type: tokenType.EOL, value: "", offset };
+        return { type: tokenType.EOL, value: "", column: column };
       case "#": {
-        return { type: tokenType.COMMENT, value: "", offset };
+        return { type: tokenType.COMMENT, value: "", column: column };
       }
       case "-": {
-        return this.readEdgeToken(offset);
+        return this.readEdgeToken(column);
       }
       case "@": {
-        return this.readPriorityToken(offset);
+        return this.readPriorityToken(column);
       }
       default: {
         if (Lexer.UPPERCASE_REGEX.test(this.char)) {
-          return { type: tokenType.NODE, value: this.char, offset };
+          return { type: tokenType.NODE, value: this.char, column: column };
         }
         else if (Lexer.LOWERCASE_REGEX.test(this.char)) {
-          return this.readKeywordToken(this.char, offset);
+          return this.readKeywordToken(this.char, column);
         }
         else if (Lexer.DIGIT_REGEX.test(this.char)) {
-          return this.readNumberToken(offset);
+          return this.readNumberToken(column);
         }
         else {
-          return { type: tokenType.INVALID, value: this.char, offset };
+          return { type: tokenType.INVALID, value: this.char, column: column };
         }
       }
     }
@@ -94,15 +94,15 @@ export class Lexer {
       switch (this.peekChar()) {
         case "+":
           this.readChar();
-          return { type: tokenType.EDGE_ADD, value: "->+", offset };
+          return { type: tokenType.EDGE_ADD, value: "->+", column: offset };
         case "-":
           this.readChar();
-          return { type: tokenType.EDGE_SUB, value: "->-", offset };
+          return { type: tokenType.EDGE_SUB, value: "->-", column: offset };
         default:
-          return { type: tokenType.EDGE_ADD, value: `->${this.peekChar()}`, offset };
+          return { type: tokenType.EDGE_ADD, value: `->${this.peekChar()}`, column: offset };
       }
     }
-    return { type: tokenType.INVALID, value: this.peekChar(), offset: this.readPosition };
+    return { type: tokenType.INVALID, value: this.peekChar(), column: this.readPosition };
   }
 
   private readPriorityToken(offset: number): Token {
@@ -113,9 +113,9 @@ export class Lexer {
     }
 
     if (value.length > 0) {
-      return { type: tokenType.PRIORITY, value, offset };
+      return { type: tokenType.PRIORITY, value, column: offset };
     }
-    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, offset };
+    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, column: offset };
   }
 
   private readKeywordToken(firstLetter: string, offset: number): Token {
@@ -127,9 +127,9 @@ export class Lexer {
 
     const keywordType = keywords.get(value);
     if (keywordType !== undefined) {
-      return { type: keywordType, value, offset };
+      return { type: keywordType, value, column: offset };
     } else {
-      return { type: tokenType.INVALID, value, offset };
+      return { type: tokenType.INVALID, value, column: offset };
     }
   }
 
@@ -140,6 +140,6 @@ export class Lexer {
       value += this.char;
     }
 
-    return { type: tokenType.NUMBER, value, offset };
+    return { type: tokenType.NUMBER, value, column: offset };
   }
 }
