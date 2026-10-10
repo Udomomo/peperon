@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { Lexer } from "../lexer/lexer.js";
 import { ParserError } from "./errors.js";
 import { Parser } from "./parser.js";
-import type { HelperNodeStatement, InputNodeStatement, OutputNodeStatement } from "../ast/ast.js";
+import type { EdgeAddExpression, EdgeSubExpression, HelperNodeStatement, InputNodeStatement, OutputNodeStatement } from "../ast/ast.js";
 
 function expectParserError(parser: Parser, location: { line: number; offset: number }, code: string) {
   let error: unknown;
@@ -88,5 +88,56 @@ describe("ノード宣言", () => {
     const parser = new Parser(lexer);
 
     expectParserError(parser, { line: 1, offset: 10 }, "PRIORITY_EXPECTED");
+  });
+});
+
+describe("計算処理", () => {
+  test("ノード間の加算処理を抽出できること", () => {
+    const lexer = new Lexer("A ->+ B");
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+    expect(program.statements).toHaveLength(1);
+
+    const statement = program.statements[0] as EdgeAddExpression;
+    expect(statement?.type).toBe("edge_add");
+    if (statement?.type === "edge_add") {
+      expect(statement.from).toBe("A");
+      expect(statement.to).toBe("B");
+    }
+  });
+
+  test("ノード間の減算処理を抽出できること", () => {
+    const lexer = new Lexer("A ->- B");
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+    expect(program.statements).toHaveLength(1);
+
+    const statement = program.statements[0] as EdgeSubExpression;
+    expect(statement?.type).toBe("edge_sub");
+    if (statement?.type === "edge_sub") {
+      expect(statement.from).toBe("A");
+      expect(statement.to).toBe("B");
+    }
+  });
+
+  test("計算対象のノードtokenがない場合はエラーになること", () => {
+    const lexer = new Lexer("B ->+ ");
+    const parser = new Parser(lexer);
+    expectParserError(parser, { line: 1, offset: 7 }, "MISSING_OPERATION_TARGET_NODE");
+  });
+});
+
+describe("複数行のプログラム", () => {
+  test("複数行のプログラムを抽出できること", () => {
+    const lexer = new Lexer(`
+      input A init 0 @123
+      output B @456
+      node C init 4 @789
+      A ->+ B
+      C ->- A
+    `);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+    expect(program.statements).toHaveLength(5);
   });
 });
