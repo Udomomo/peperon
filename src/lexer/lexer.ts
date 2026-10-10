@@ -150,7 +150,7 @@ export class Lexer {
     if (value === "-") {
       return { type: tokenType.INVALID, value, line, column };
     }
-    return { type: tokenType.NUMBER, value, line, column };
+    return { type: tokenType.INITVALUE, value, line, column };
   }
 
   private skipSpaces() {

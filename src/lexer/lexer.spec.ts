@@ -95,7 +95,7 @@ describe("数値", () => {
     const lexer = new Lexer(input);
 
     const token1 = lexer.nextToken();
-    expect(token1.type).toBe(tokenType.NUMBER);
+    expect(token1.type).toBe(tokenType.INITVALUE);
     expect(token1.value).toBe(input);
     expect(token1.column).toBe(1);
   });
