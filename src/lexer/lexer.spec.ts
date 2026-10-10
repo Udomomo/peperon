@@ -110,15 +110,43 @@ describe("数値", () => {
   });
 });
 
-describe("EOL", () => {
-  test("入力文字列の最後にEOLを抽出できること", () => {
+describe("EOF", () => {
+  test("入力文字列の最後にEOFを抽出できること", () => {
     const lexer = new Lexer("->+");
 
     lexer.nextToken();
     const token1 = lexer.nextToken();
-    expect(token1.type).toBe(tokenType.EOL);
+    expect(token1.type).toBe(tokenType.EOF);
     expect(token1.value).toBe("");
+    expect(token1.line).toBe(1);
     expect(token1.column).toBe(4);
+  });
+});
+
+describe("行番号", () => {
+  test("複数行のトークンに1始まりの行番号と行内の列番号を付けること", () => {
+    const lexer = new Lexer("A\n  ->+ B\n?");
+
+    const token1 = lexer.nextToken();
+    const token2 = lexer.nextToken();
+    const token3 = lexer.nextToken();
+    const token4 = lexer.nextToken();
+    const token5 = lexer.nextToken();
+
+    expect(token1).toMatchObject({ type: tokenType.NODE, value: "A", line: 1, column: 1 });
+    expect(token2).toMatchObject({ type: tokenType.EDGE_ADD, value: "->+", line: 2, column: 3 });
+    expect(token3).toMatchObject({ type: tokenType.NODE, value: "B", line: 2, column: 7 });
+    expect(token4).toMatchObject({ type: tokenType.INVALID, value: "?", line: 3, column: 1 });
+    expect(token5).toMatchObject({ type: tokenType.EOF, value: "", line: 3, column: 2 });
+  });
+
+  test("改行コードCRLFは1行として数えること", () => {
+    const lexer = new Lexer("A\r\nB");
+
+    lexer.nextToken();
+    const token = lexer.nextToken();
+
+    expect(token).toMatchObject({ type: tokenType.NODE, value: "B", line: 2, column: 1 });
   });
 });
 
@@ -186,7 +214,7 @@ describe("複数種類のトークン", () => {
     expect(token3.value).toBe("1");
     expect(token3.column).toBe(9);
 
-    expect(token4.type).toBe(tokenType.EOL);
+    expect(token4.type).toBe(tokenType.EOF);
     expect(token4.value).toBe("");
     expect(token4.column).toBe(11);
   });
@@ -211,7 +239,7 @@ describe("複数種類のトークン", () => {
     expect(token3.value).toBe("1");
     expect(token3.column).toBe(7);
 
-    expect(token4.type).toBe(tokenType.EOL);
+    expect(token4.type).toBe(tokenType.EOF);
     expect(token4.value).toBe("");
     expect(token4.column).toBe(9);
   });

@@ -18,7 +18,7 @@ export const tokenType = {
   HELPER: "helper",
   INIT: "init",
 
-  EOL: "EOL",
+  EOF: "EOF",
   COMMENT: "COMMENT",
   INVALID: "INVALID",
 } as const;
@@ -28,6 +28,8 @@ export type TokenType = (typeof tokenType)[keyof typeof tokenType];
 export interface Token {
   type: TokenType;
   value: string;
+  // トークンの開始行。1始まり。
+  line: number;
   // 行内におけるトークンの開始位置。1始まり。
   column: number;
 }
