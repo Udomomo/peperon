@@ -56,7 +56,7 @@ export class Lexer {
    * 次のtokenを返す。parserからの利用を想定している。
    */
   nextToken(): Token {
-    this.skipSpaces();
+    this.skipIgnoredCharacters();
 
     // tokenの開始位置をlineとcolumnとして返す。どちらも1始まりにする。
     const line = this.line;
@@ -65,9 +65,6 @@ export class Lexer {
     switch (this.char) {
       case Lexer.EOF:
         return { type: tokenType.EOF, value: "", line, column };
-      case "#": {
-        return { type: tokenType.COMMENT, value: "", line, column };
-      }
       case "-": {
         if (this.peekChar() === ">") {
           return this.readEdgeToken(line, column);
@@ -153,9 +150,13 @@ export class Lexer {
     return { type: tokenType.INITVALUE, value, line, column };
   }
 
-  private skipSpaces() {
+  private skipIgnoredCharacters() {
     do {
       this.readChar();
+
+      if (this.char === "#") {
+        this.skipComment();
+      }
 
       if (this.char === "\n") {
         this.line++;
@@ -165,5 +166,15 @@ export class Lexer {
         this.lineStartPosition = this.position + 1;
       }
     } while (Lexer.SPACE_CHARS.has(this.char));
+  }
+
+  /**
+   * コメント開始位置から改行またはEOFまで読み飛ばす。
+   * 改行自体はskipIgnoredCharactersで処理し、行番号を更新する。
+   */
+  private skipComment() {
+    while (this.char !== "\n" && this.char !== "\r" && this.char !== Lexer.EOF) {
+      this.readChar();
+    }
   }
 }
