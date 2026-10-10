@@ -8,12 +8,17 @@ export class Lexer {
   readPosition: number = 0;
   // 今いる位置の文字。
   char: string = "";
+  // 今いる行。1始まり。
+  line: number = 1;
+
+  // 現在の行の先頭位置。columnの計算に使う。
+  private lineStartPosition: number = 0;
 
   static readonly SPACE_CHARS: Set<string> = new Set([" ", "\t", "\n", "\r"]);
   static readonly DIGIT_REGEX = /^[0-9]$/;
   static readonly UPPERCASE_REGEX = /^[A-Z]$/;
   static readonly LOWERCASE_REGEX = /^[a-z]$/;
-  static readonly EOL = "EOL";
+  static readonly EOF = "EOF";
 
   constructor(input: string) {
     this.input = input;
@@ -25,7 +30,7 @@ export class Lexer {
   readChar() {
     if (this.readPosition >= this.input.length) {
       this.position = this.readPosition;
-      this.char = Lexer.EOL;
+      this.char = Lexer.EOF;
     } else {
       this.char = this.getChar(this.input, this.readPosition);
       this.position = this.readPosition;
@@ -38,7 +43,7 @@ export class Lexer {
    */
   peekChar(): string {
     if (this.readPosition >= this.input.length) {
-      return Lexer.EOL;
+      return Lexer.EOF;
     }
     return this.getChar(this.input, this.readPosition);
   }
@@ -51,63 +56,62 @@ export class Lexer {
    * 次のtokenを返す。parserからの利用を想定している。
    */
   nextToken(): Token {
-    do {
-      this.readChar();
-    } while (Lexer.SPACE_CHARS.has(this.char));
+    this.skipSpaces();
 
-    // tokenの開始位置をcolumnとして返す。1始まりにするために+1する。
-    const column = this.position + 1;
+    // tokenの開始位置をlineとcolumnとして返す。どちらも1始まりにする。
+    const line = this.line;
+    const column = this.position - this.lineStartPosition + 1;
 
     switch (this.char) {
-      case Lexer.EOL:
-        return { type: tokenType.EOL, value: "", column: column };
+      case Lexer.EOF:
+        return { type: tokenType.EOF, value: "", line, column };
       case "#": {
-        return { type: tokenType.COMMENT, value: "", column: column };
+        return { type: tokenType.COMMENT, value: "", line, column };
       }
       case "-": {
         if (this.peekChar() === ">") {
-          return this.readEdgeToken(column);
+          return this.readEdgeToken(line, column);
         }
         else {
           // 負の数値の可能性があるため、数値トークンとしての処理を試みる。
-          return this.readNumberToken(column);
+          return this.readNumberToken(line, column);
         }
       }
       case "@": {
-        return this.readPriorityToken(column);
+        return this.readPriorityToken(line, column);
       }
       default: {
         if (Lexer.UPPERCASE_REGEX.test(this.char)) {
-          return { type: tokenType.NODE, value: this.char, column: column };
+          return { type: tokenType.NODE, value: this.char, line, column };
         }
         else if (Lexer.LOWERCASE_REGEX.test(this.char)) {
-          return this.readKeywordToken(this.char, column);
+          return this.readKeywordToken(this.char, line, column);
         }
         else if (Lexer.DIGIT_REGEX.test(this.char)) {
-          return this.readNumberToken(column);
+          return this.readNumberToken(line, column);
         }
         else {
-          return { type: tokenType.INVALID, value: this.char, column: column };
+          return { type: tokenType.INVALID, value: this.char, line, column };
         }
       }
     }
   }
 
-  private readEdgeToken(column: number): Token {
+  private readEdgeToken(line: number, column: number): Token {
     this.readChar(); // '>'を読み飛ばす
     switch (this.peekChar()) {
       case "+":
         this.readChar();
-        return { type: tokenType.EDGE_ADD, value: "->+", column: column };
+        return { type: tokenType.EDGE_ADD, value: "->+", line, column };
       case "-":
         this.readChar();
-        return { type: tokenType.EDGE_SUB, value: "->-", column: column };
+        return { type: tokenType.EDGE_SUB, value: "->-", line, column };
       default:
-        return { type: tokenType.INVALID, value: `->${this.peekChar()}`, column: column };
+        return { type: tokenType.INVALID, value: `->${this.peekChar()}`, line, column };
     }
   }
 
-  private readPriorityToken(column: number): Token {
+  private readPriorityToken(line: number, column: number): Token {
     let value = "";
     while (Lexer.DIGIT_REGEX.test(this.peekChar())) {
       this.readChar();
@@ -115,12 +119,12 @@ export class Lexer {
     }
 
     if (value.length > 0) {
-      return { type: tokenType.PRIORITY, value, column: column };
+      return { type: tokenType.PRIORITY, value, line, column };
     }
-    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, column: column };
+    return { type: tokenType.INVALID, value: `@${this.peekChar()}`, line, column };
   }
 
-  private readKeywordToken(firstLetter: string, offset: number): Token {
+  private readKeywordToken(firstLetter: string, line: number, column: number): Token {
     let value = firstLetter;
     while (Lexer.LOWERCASE_REGEX.test(this.peekChar())) {
       this.readChar();
@@ -129,13 +133,13 @@ export class Lexer {
 
     const keywordType = keywords.get(value);
     if (keywordType !== undefined) {
-      return { type: keywordType, value, column: offset };
+      return { type: keywordType, value, line, column };
     } else {
-      return { type: tokenType.INVALID, value, column: offset };
+      return { type: tokenType.INVALID, value, line, column };
     }
   }
 
-  private readNumberToken(column: number): Token {
+  private readNumberToken(line: number, column: number): Token {
     let value = this.char;
     while (Lexer.DIGIT_REGEX.test(this.peekChar())) {
       this.readChar();
@@ -144,8 +148,22 @@ export class Lexer {
 
     // マイナス符号の後に数値が続かない場合は不正なトークンである。
     if (value === "-") {
-      return { type: tokenType.INVALID, value, column: column };
+      return { type: tokenType.INVALID, value, line, column };
     }
-    return { type: tokenType.NUMBER, value, column: column };
+    return { type: tokenType.NUMBER, value, line, column };
+  }
+
+  private skipSpaces() {
+    do {
+      this.readChar();
+
+      if (this.char === "\n") {
+        this.line++;
+        this.lineStartPosition = this.position + 1;
+      } else if (this.char === "\r" && this.peekChar() !== "\n") {
+        this.line++;
+        this.lineStartPosition = this.position + 1;
+      }
+    } while (Lexer.SPACE_CHARS.has(this.char));
   }
 }

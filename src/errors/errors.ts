@@ -19,6 +19,7 @@ export class InterpreterError extends Error {
 
 export type Location = {
   filePath: string;
+  // ソース上の行番号。1始まり。
   line: number;
   // 行内のオフセット位置。tokenの先頭位置を示す。0始まり。
   offset: number;
