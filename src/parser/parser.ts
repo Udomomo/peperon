@@ -25,7 +25,7 @@ export class Parser {
     this.peekToken = this.lexer.nextToken();
   }
 
-  parse() {
+  parseProgram() {
     const program = new Program();
 
     while (this.token.type != tokenType.EOF) {
@@ -62,6 +62,8 @@ export class Parser {
     this.readToken();
     const node = this.token;
 
+    const initValueToken = this.parseInitValueToken(keyword);
+
     const priorityExpectedToken = this.peekToken;
 
     if (priorityExpectedToken.type != tokenType.PRIORITY) {
@@ -75,15 +77,13 @@ export class Parser {
     this.readToken();
     const priority = this.token;
 
-    const initValueToken = this.parseInitValueToken(keyword);
-
     switch (keyword.type) {
       case tokenType.INPUT:
         return new InputNodeStatement(node.value, Number(initValueToken?.value), Number(priority.value));
       case tokenType.OUTPUT:
         return new OutputNodeStatement(node.value, Number(priority.value));
       case tokenType.HELPER:
-        return new HelperNodeStatement(node.value, Number(initValueToken?.value), Number(priority.value));
+        return new HelperNodeStatement(node.value, Number(initValueToken?.value ?? 0), Number(priority.value));
       default: {
         throw new ParserError(
           "Failed to parse program",
