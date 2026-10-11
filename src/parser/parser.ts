@@ -1,4 +1,5 @@
 import { InputNodeStatement, OutputNodeStatement, HelperNodeStatement, EdgeSubExpression, EdgeAddExpression, Program } from "../ast/ast.js";
+import { AstError } from "../ast/errors.js";
 import { tokenType, type Token, type TokenType } from "../ast/token.js";
 import { toLocation } from "../errors/errors.js";
 import type { Lexer } from "../lexer/lexer.js";
@@ -82,21 +83,25 @@ export class Parser {
     this.readToken();
     const priority = this.token;
 
-    switch (keyword.type) {
-      case tokenType.INPUT:
-        return new InputNodeStatement(node.value, initValueToken?.value ?? "", Number(priority.value));
-      case tokenType.OUTPUT:
-        return new OutputNodeStatement(node.value, Number(priority.value));
-      case tokenType.HELPER:
-        return new HelperNodeStatement(node.value, initValueToken?.value, Number(priority.value));
-      default: {
-        throw new ParserError(
-          "Failed to parse program",
-          toLocation(keyword),
-          "invalid node type",
-          "INVALID_NODE_TYPE",
-        );
+    try {
+      switch (keyword.type) {
+        case tokenType.INPUT:
+          return new InputNodeStatement(node.value, initValueToken?.value ?? "", Number(priority.value));
+        case tokenType.OUTPUT:
+          return new OutputNodeStatement(node.value, Number(priority.value));
+        case tokenType.HELPER:
+          return new HelperNodeStatement(node.value, initValueToken?.value, Number(priority.value));
+        default: {
+          throw new ParserError(
+            "Failed to parse program",
+            toLocation(keyword),
+            "invalid node type",
+            "INVALID_NODE_TYPE",
+          );
+        }
       }
+    } catch (error) {
+      throwParserError(error, initValueToken ?? node);
     }
   }
 
@@ -165,11 +170,28 @@ export class Parser {
     this.readToken();
     const targetNode = this.token;
 
-    switch (operatorExpectedToken.type) {
-      case tokenType.EDGE_ADD:
-        return new EdgeAddExpression(node.value, targetNode.value);
-      case tokenType.EDGE_SUB:
-        return new EdgeSubExpression(node.value, targetNode.value);
+    try {
+      switch (operatorExpectedToken.type) {
+        case tokenType.EDGE_ADD:
+          return new EdgeAddExpression(node.value, targetNode.value);
+        case tokenType.EDGE_SUB:
+          return new EdgeSubExpression(node.value, targetNode.value);
+      }
+    } catch (error) {
+      throwParserError(error, node);
     }
   }
+}
+
+function throwParserError(error: unknown, token: Token): never {
+  if (!(error instanceof AstError)) {
+    throw error;
+  }
+
+  throw new ParserError(
+    "Failed to parse program",
+    toLocation(token),
+    error.message,
+    error.code,
+  );
 }

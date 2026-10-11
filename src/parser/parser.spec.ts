@@ -90,6 +90,20 @@ describe("ノード宣言", () => {
 
     expectParserError(parser, { line: 1, column: 10 }, "PRIORITY_EXPECTED");
   });
+
+  test("inputノードのinit valueが範囲外の場合はエラーになること", () => {
+    const lexer = new Lexer("input A init 2147483648 @123");
+    const parser = new Parser(lexer);
+
+    expectParserError(parser, { line: 1, column: 14 }, "VALUE_OUT_OF_RANGE");
+  });
+
+  test("補助ノードのinit valueが範囲外の場合はエラーになること", () => {
+    const lexer = new Lexer("node C init -2147483649 @789");
+    const parser = new Parser(lexer);
+
+    expectParserError(parser, { line: 1, column: 13 }, "VALUE_OUT_OF_RANGE");
+  });
 });
 
 describe("計算処理", () => {
