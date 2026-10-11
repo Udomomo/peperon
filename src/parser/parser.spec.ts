@@ -3,8 +3,9 @@ import { Lexer } from "../lexer/lexer.js";
 import { ParserError } from "./errors.js";
 import { Parser } from "./parser.js";
 import type { EdgeAddExpression, EdgeSubExpression, HelperNodeStatement, InputNodeStatement, OutputNodeStatement } from "../ast/ast.js";
+import type { Location } from "../errors/errors.js";
 
-function expectParserError(parser: Parser, location: { line: number; offset: number }, code: string) {
+function expectParserError(parser: Parser, location: Location, code: string) {
   let error: unknown;
   try {
     parser.parseProgram();
@@ -80,14 +81,14 @@ describe("ノード宣言", () => {
     const lexer = new Lexer("node C");
     const parser = new Parser(lexer);
 
-    expectParserError(parser, { line: 1, offset: 7 }, "PRIORITY_EXPECTED");
+    expectParserError(parser, { line: 1, column: 7 }, "PRIORITY_EXPECTED");
   });
 
   test("Outputノードでinit valueを宣言するとエラーになること", () => {
     const lexer = new Lexer("output B init 1 @456");
     const parser = new Parser(lexer);
 
-    expectParserError(parser, { line: 1, offset: 10 }, "PRIORITY_EXPECTED");
+    expectParserError(parser, { line: 1, column: 10 }, "PRIORITY_EXPECTED");
   });
 });
 
@@ -123,7 +124,7 @@ describe("計算処理", () => {
   test("計算対象のノードtokenがない場合はエラーになること", () => {
     const lexer = new Lexer("B ->+ ");
     const parser = new Parser(lexer);
-    expectParserError(parser, { line: 1, offset: 7 }, "MISSING_OPERATION_TARGET_NODE");
+    expectParserError(parser, { line: 1, column: 7 }, "MISSING_OPERATION_TARGET_NODE");
   });
 });
 
