@@ -10,7 +10,7 @@ export const tokenType = {
   PRIORITY: "PRIORITY",
 
   // 数値を表すトークン。補助ノードのinitの値として使われる。
-  NUMBER: "NUMBER",
+  INITVALUE: "INITVALUE",
 
   // キーワード
   INPUT: "input",

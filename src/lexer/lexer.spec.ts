@@ -95,7 +95,7 @@ describe("数値", () => {
     const lexer = new Lexer(input);
 
     const token1 = lexer.nextToken();
-    expect(token1.type).toBe(tokenType.NUMBER);
+    expect(token1.type).toBe(tokenType.INITVALUE);
     expect(token1.value).toBe(input);
     expect(token1.column).toBe(1);
   });
@@ -151,23 +151,29 @@ describe("行番号", () => {
 });
 
 describe("コメント", () => {
-  test("コメントを抽出できること", () => {
-    const lexer = new Lexer("# This is a comment");
+  test("コメント行を次の行まで読み飛ばすこと", () => {
+    const lexer = new Lexer("# This is a comment\nA");
 
     const token1 = lexer.nextToken();
-    expect(token1.type).toBe(tokenType.COMMENT);
-    expect(token1.value).toBe("");
-    expect(token1.column).toBe(1);
+    expect(token1).toMatchObject({ type: tokenType.NODE, value: "A", line: 2, column: 1 });
   });
 
-  test("行の途中からのコメントを抽出できること", () => {
-    const lexer = new Lexer("A # This is a comment");
+  test("行の途中からコメント行末までを読み飛ばすこと", () => {
+    const lexer = new Lexer("A # This is a comment\nB");
 
-    lexer.nextToken();
     const token1 = lexer.nextToken();
-    expect(token1.type).toBe(tokenType.COMMENT);
-    expect(token1.value).toBe("");
-    expect(token1.column).toBe(3);
+    const token2 = lexer.nextToken();
+    expect(token1).toMatchObject({ type: tokenType.NODE, value: "A", line: 1, column: 1 });
+    expect(token2).toMatchObject({ type: tokenType.NODE, value: "B", line: 2, column: 1 });
+  });
+
+  test("複数のコメント行と末尾コメントを読み飛ばしてEOFへ進むこと", () => {
+    const lexer = new Lexer("# first\n# second\nA # last");
+
+    const token1 = lexer.nextToken();
+    const token2 = lexer.nextToken();
+    expect(token1).toMatchObject({ type: tokenType.NODE, value: "A", line: 3, column: 1 });
+    expect(token2).toMatchObject({ type: tokenType.EOF, value: "", line: 3, column: 9 });
   });
 });
 

@@ -1,3 +1,5 @@
+import { type Token } from "../ast/token.js";
+
 /**
  * インタプリタ内の全てのエラーの基底となるクラス。
  */
@@ -7,7 +9,7 @@ export class InterpreterError extends Error {
   code: string;
 
   constructor(message: string, location: Location, reason: string, code: string) {
-    const fullMessage = `${message} at ${location.filePath}:${location.line} (${reason})`;
+    const fullMessage = `${message} at ${location.line}:${location.column} (${reason})`;
     super(fullMessage);
 
     this.name = 'InterpreterError';
@@ -18,9 +20,15 @@ export class InterpreterError extends Error {
 }
 
 export type Location = {
-  filePath: string;
   // ソース上の行番号。1始まり。
   line: number;
-  // 行内のオフセット位置。tokenの先頭位置を示す。0始まり。
-  offset: number;
+  // 行内のカラム位置。tokenの先頭位置を示す。1始まり。
+  column: number;
+}
+
+export function toLocation(token: Token): Location {
+  return {
+    line: token.line,
+    column: token.column,
+  };
 }
