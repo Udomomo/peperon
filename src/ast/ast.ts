@@ -1,5 +1,5 @@
 import { ParserError } from "../parser/errors.js";
-import { isInInt32 } from "../utils/isInInt32.js";
+import { isInInt32, toInt32 } from "../utils/isInInt32.js";
 import { AstError } from "./errors.js";
 
 export class Program {
@@ -25,12 +25,13 @@ export class InputNodeStatement {
   initValue: number;
   priority: NodePriority;
 
-  constructor(name: string, initValue: number, priorityValue?: number) {
+  constructor(name: string, initValue: string | number, priorityValue?: number) {
     if (!UPPERCASE_REGEX.test(name)) {
       throw new AstError("INVALID_NODE_NAME");
     }
 
-    if (!isInInt32(initValue)) {
+    const parsedInitValue = typeof initValue === "string" ? toInt32(initValue) : initValue;
+    if (parsedInitValue === undefined || !isInInt32(parsedInitValue)) {
       throw new AstError("VALUE_OUT_OF_RANGE");
     }
 
@@ -40,7 +41,7 @@ export class InputNodeStatement {
     const priority: NodePriority = { __brandId: "NodePriority", value: priorityValue };
 
     this.name = name;
-    this.initValue = initValue;
+    this.initValue = parsedInitValue;
     this.priority = priority;
   }
 }
@@ -71,7 +72,7 @@ export class HelperNodeStatement {
   initValue: number = 0;
   priority: NodePriority;
 
-  constructor(name: string, initValue?: number, priorityValue?: number) {
+  constructor(name: string, initValue?: string | number, priorityValue?: number) {
     if (!UPPERCASE_REGEX.test(name)) {
       throw new AstError("INVALID_NODE_NAME");
     }
@@ -85,10 +86,11 @@ export class HelperNodeStatement {
     this.priority = priority;
 
     if (initValue !== undefined) {
-      if (!isInInt32(initValue)) {
+      const parsedInitValue = typeof initValue === "string" ? toInt32(initValue) : initValue;
+      if (parsedInitValue === undefined || !isInInt32(parsedInitValue)) {
         throw new AstError("VALUE_OUT_OF_RANGE");
       }
-      this.initValue = initValue;
+      this.initValue = parsedInitValue;
     }
   }
 }
