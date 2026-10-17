@@ -20,7 +20,7 @@ export interface NodePriority {
 const UPPERCASE_REGEX = /^[A-Z]$/;
 
 export class InputNodeStatement {
-  type = "input";
+  type: "input" = "input";
   line: number;
   name: string;
   initValue: number;
@@ -49,7 +49,7 @@ export class InputNodeStatement {
 }
 
 export class OutputNodeStatement {
-  type = "output";
+  type: "output" = "output";
   line: number;
   name: string;
   priority: NodePriority;
@@ -71,7 +71,7 @@ export class OutputNodeStatement {
 }
 
 export class HelperNodeStatement {
-  type = "helper";
+  type: "helper" = "helper";
   line: number;
   name: string;
   initValue: number = 0;
@@ -104,7 +104,7 @@ export class HelperNodeStatement {
 export type EdgeExpression = EdgeAddExpression | EdgeSubExpression;
 
 export class EdgeAddExpression {
-  type = "edge_add";
+  type: "edge_add" = "edge_add";
   line: number;
   from: string;
   to: string;
@@ -120,7 +120,7 @@ export class EdgeAddExpression {
 }
 
 export class EdgeSubExpression {
-  type = "edge_sub";
+  type: "edge_sub" = "edge_sub";
   line: number;
   from: string;
   to: string;
