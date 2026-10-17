@@ -1,4 +1,4 @@
-import { type NodeStatement, type Program, type Statement } from "../ast/ast.js";
+import { type EdgeExpression, type NodeStatement, type Program, type Statement } from "../ast/ast.js";
 import { EvaluatorError } from "./errors.js";
 
 type Node = {
@@ -13,6 +13,8 @@ type Destination = {
 }
 
 export class Evaluator {
+  readonly MAX_LOOPS = 1000000;
+
   /**
    * ノードを優先度が高い順に保持する配列。
    */
@@ -27,8 +29,12 @@ export class Evaluator {
 
   outputNodeName: string = "";
 
-  evaluate(program: Program): void {
+  evaluate(program: Program): number {
     const statements = program.statements;
+    this.buildGraph(statements);
+
+    this.proceed();
+    return this.nodesByPriority.find(node => node.name === this.outputNodeName)?.value ?? 0;
   }
 
   /**
@@ -36,6 +42,8 @@ export class Evaluator {
    */
   buildGraph(statements: Statement[]): void {
     const nodes: Node[] = [];
+
+    // interpretNodeStatement内で、priorityの重複チェック用途のみに使う配列。
     const priorities: number[] = [];
 
     for (const statement of statements) {
@@ -44,9 +52,12 @@ export class Evaluator {
         nodes.push(node);
         priorities.push(node.priority);
       } else {
-
+        this.interpretEdgeExpression(statement);
       }
     }
+
+    // 作ったノードを優先度が高い順に並べて記録する。
+    this.nodesByPriority = nodes.sort((a, b) => b.priority - a.priority);
   }
 
   /**
@@ -82,10 +93,84 @@ export class Evaluator {
       }
       this.outputNodeName = statement.name;
     }
-    return {
+    const node = {
       name: statement.name,
       value: statement.priority.value,
       priority: statement.priority.value,
     };
+    this.graph.set(statement.name, []);
+    return node;
+  }
+
+  /**
+   * operationのstatementを1行ずつ解釈する。
+   */
+  interpretEdgeExpression(expression: EdgeExpression): void {
+    if (!this.graph.has(expression.from)) {
+      throw new EvaluatorError(
+        `Node ${expression.from} is not defined.`,
+        {line: expression.line, column: 1},
+        "undefined node",
+        "UNDEFINED_NODE",
+      );
+    }
+    if (!this.graph.has(expression.to)) {
+      throw new EvaluatorError(
+        `Node ${expression.to} is not defined.`,
+        {line: expression.line, column: 1},
+        "undefined node",
+        "UNDEFINED_NODE",
+      );
+    }
+
+    const existingDestinations = this.graph.get(expression.from) || [];
+    if (existingDestinations.some(dest => dest.nodeName === expression.to)) {
+      throw new EvaluatorError(
+        `Edge from ${expression.from} to ${expression.to} is already defined.`,
+        {line: expression.line, column: 1},
+        "duplicate edge definition",
+        "DUPLICATE_EDGE",
+      );
+    }
+
+    const weight = expression.type === "edge_add" ? 1 : -1;
+    const newDestination: Destination = { nodeName: expression.to, weight };
+    this.graph.set(expression.from, [...existingDestinations, newDestination]);
+  }
+
+  /**
+   * グラフに基づき、計算を1ステップ進める。
+   */
+  proceed(): void {
+    let counter = 0;
+
+    while (true) {
+      if (counter > this.MAX_LOOPS) {
+        throw new EvaluatorError(
+          `Exceeded maximum number of steps (${this.MAX_LOOPS}). Possible infinite loop.`,
+          {line: 1, column: 1},
+          "infinite loop detected",
+          "INFINITE_LOOP",
+        );
+      }
+
+      // 優先度が高いノードから順に確認。
+      // ノードの値が正の数であり、graph上にdestを持っている場合、そのnodeが次の操作対象となる。もしそのようなnodeがなければ終了する。
+      const actorNode = this.nodesByPriority.find(node => node.value > 0 && (this.graph.get(node.name)?.length ?? 0) > 0);
+      if (!actorNode) {
+        break;
+      }
+
+      // graphに従って、destのnodeの値を更新する。
+      const destinations = this.graph.get(actorNode.name) ?? [];
+      for (const dest of destinations) {
+        const destNode = this.nodesByPriority.find(node => node.name === dest.nodeName);
+        if (destNode) {
+          destNode.value = destNode.value + dest.weight;
+        }
+      }
+
+      counter++;
+    }
   }
 }
