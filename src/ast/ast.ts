@@ -21,11 +21,12 @@ const UPPERCASE_REGEX = /^[A-Z]$/;
 
 export class InputNodeStatement {
   type = "input";
+  line: number;
   name: string;
   initValue: number;
   priority: NodePriority;
 
-  constructor(name: string, initValue: string | number, priorityValue?: number) {
+  constructor(name: string, initValue: string | number, priorityValue: number | undefined, line: number) {
     if (!UPPERCASE_REGEX.test(name)) {
       throw new AstError("INVALID_NODE_NAME");
     }
@@ -40,6 +41,7 @@ export class InputNodeStatement {
     }
     const priority: NodePriority = { __brandId: "NodePriority", value: priorityValue };
 
+    this.line = line;
     this.name = name;
     this.initValue = parsedInitValue;
     this.priority = priority;
@@ -48,10 +50,11 @@ export class InputNodeStatement {
 
 export class OutputNodeStatement {
   type = "output";
+  line: number;
   name: string;
   priority: NodePriority;
 
-  constructor(name: string, priorityValue?: number) {
+  constructor(name: string, priorityValue: number | undefined, line: number) {
     if (!UPPERCASE_REGEX.test(name)) {
       throw new AstError("INVALID_NODE_NAME");
     }
@@ -61,6 +64,7 @@ export class OutputNodeStatement {
     }
     const priority: NodePriority = { __brandId: "NodePriority", value: priorityValue };
 
+    this.line = line;
     this.name = name;
     this.priority = priority;
   }
@@ -68,11 +72,12 @@ export class OutputNodeStatement {
 
 export class HelperNodeStatement {
   type = "helper";
+  line: number;
   name: string;
   initValue: number = 0;
   priority: NodePriority;
 
-  constructor(name: string, initValue?: string | number, priorityValue?: number) {
+  constructor(name: string, initValue: string | number | undefined, priorityValue: number | undefined, line: number) {
     if (!UPPERCASE_REGEX.test(name)) {
       throw new AstError("INVALID_NODE_NAME");
     }
@@ -82,6 +87,7 @@ export class HelperNodeStatement {
     }
     const priority: NodePriority = { __brandId: "NodePriority", value: priorityValue };
 
+    this.line = line;
     this.name = name;
     this.priority = priority;
 
@@ -99,13 +105,15 @@ export type EdgeExpression = EdgeAddExpression | EdgeSubExpression;
 
 export class EdgeAddExpression {
   type = "edge_add";
+  line: number;
   from: string;
   to: string;
 
-  constructor(from: string, to: string) {
+  constructor(from: string, to: string, line: number) {
     if (!UPPERCASE_REGEX.test(from) || !UPPERCASE_REGEX.test(to)) {
       throw new AstError("INVALID_NODE_NAME");
     }
+    this.line = line;
     this.from = from;
     this.to = to;
   }
@@ -113,13 +121,15 @@ export class EdgeAddExpression {
 
 export class EdgeSubExpression {
   type = "edge_sub";
+  line: number;
   from: string;
   to: string;
 
-  constructor(from: string, to: string) {
+  constructor(from: string, to: string, line: number) {
     if (!UPPERCASE_REGEX.test(from) || !UPPERCASE_REGEX.test(to)) {
       throw new AstError("INVALID_NODE_NAME");
     }
+    this.line = line;
     this.from = from;
     this.to = to;
   }

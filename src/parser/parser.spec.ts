@@ -154,5 +154,7 @@ describe("複数行のプログラム", () => {
     const parser = new Parser(lexer);
     const program = parser.parseProgram();
     expect(program.statements).toHaveLength(5);
+
+    expect(program.statements.map(statement => statement.line)).toEqual([2, 3, 4, 5, 6]);
   });
 });

@@ -86,11 +86,11 @@ export class Parser {
     try {
       switch (keyword.type) {
         case tokenType.INPUT:
-          return new InputNodeStatement(node.value, initValueToken?.value ?? "", Number(priority.value));
+          return new InputNodeStatement(node.value, initValueToken?.value ?? "", Number(priority.value), keyword.line);
         case tokenType.OUTPUT:
-          return new OutputNodeStatement(node.value, Number(priority.value));
+          return new OutputNodeStatement(node.value, Number(priority.value), keyword.line);
         case tokenType.HELPER:
-          return new HelperNodeStatement(node.value, initValueToken?.value, Number(priority.value));
+          return new HelperNodeStatement(node.value, initValueToken?.value, Number(priority.value), keyword.line);
         default: {
           throw new ParserError(
             "Failed to parse program",
@@ -173,9 +173,9 @@ export class Parser {
     try {
       switch (operatorExpectedToken.type) {
         case tokenType.EDGE_ADD:
-          return new EdgeAddExpression(node.value, targetNode.value);
+          return new EdgeAddExpression(node.value, targetNode.value, node.line);
         case tokenType.EDGE_SUB:
-          return new EdgeSubExpression(node.value, targetNode.value);
+          return new EdgeSubExpression(node.value, targetNode.value, node.line);
       }
     } catch (error) {
       throwParserError(error, node);
