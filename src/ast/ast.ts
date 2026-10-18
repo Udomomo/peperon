@@ -52,6 +52,7 @@ export class OutputNodeStatement {
   type: "output" = "output";
   line: number;
   name: string;
+  initValue: number = 0;
   priority: NodePriority;
 
   constructor(name: string, priorityValue: number | undefined, line: number) {
