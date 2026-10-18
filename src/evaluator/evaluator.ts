@@ -13,25 +13,39 @@ type Destination = {
 }
 
 export class Evaluator {
-  readonly MAX_LOOPS = 1000000;
+  private MAX_LOOPS: number;
 
   /**
    * ノードを優先度が高い順に保持する配列。
    */
-  nodesByPriority: Node[] = [];
+  private nodesByPriority: Node[] = [];
 
   /**
    * ノードの関係を隣接グラフとして保持する配列。
    * ノードの名前をキーとし、そこから矢印が伸びる先のノードの名前と重みの配列を値として保持する。
    * 例: A ->+ B, A ->- C の場合、graph.get("A") は [{ name: "B", weight: 1 }, { name: "C", weight: -1 }] となる。
    */
-  graph: Map<string, Destination[]> = new Map();
+  private graph: Map<string, Destination[]> = new Map();
 
-  outputNodeName: string = "";
+  private outputNodeName: string = "";
+
+  constructor(maxLoops: number = 1000000) {
+    this.MAX_LOOPS = maxLoops;
+  }
 
   evaluate(program: Program, stdOut: (message: string) => void): number {
     const statements = program.statements;
     this.buildGraph(statements);
+
+    // 全てのノードを読んでもoutputノードがなかった場合はエラーとする。
+    if (!this.outputNodeName) {
+      throw new EvaluatorError(
+        "No output node defined.",
+        {line: 1, column: 1},
+        "missing output node",
+        "MISSING_OUTPUT_NODE",
+      );
+    }
 
     this.proceed(stdOut);
     return this.nodesByPriority.find(node => node.name === this.outputNodeName)?.value ?? 0;
@@ -77,8 +91,8 @@ export class Evaluator {
       throw new EvaluatorError(
         `Node ${statement.name} has a priority value that is already used by another node.`,
         {line: statement.line, column: 1},
-        "duplicate priority value",
-        "DUPLICATE_PRIORITY_VALUE",
+        "duplicate priority",
+        "DUPLICATE_PRIORITY",
       );
     }
 
