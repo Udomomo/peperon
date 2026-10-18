@@ -123,6 +123,36 @@ describe("グラフの評価", () => {
 
     expectEvaluatorError(evaluator, program, "INFINITE_LOOP");
   });
+
+  test("ノードの値が32bit整数の上限を超えた場合はエラーになること", () => {
+    const lexer = new Lexer(`
+      input A init 1 @1
+      input B init 2147483647 @2
+      output C @3
+      A ->+ B
+    `);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    const evaluator = new Evaluator();
+
+    expectEvaluatorError(evaluator, program, "INTEGER_OVERFLOW");
+  });
+
+  test("ノードの値が32bit整数の下限を下回った場合はエラーになること", () => {
+    const lexer = new Lexer(`
+      input A init 1 @1
+      input B init -2147483648 @2
+      output C @3
+      A ->- B
+    `);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    const evaluator = new Evaluator();
+
+    expectEvaluatorError(evaluator, program, "INTEGER_OVERFLOW");
+  });
 });
 
 describe("グラフ構築失敗のケース", () => {

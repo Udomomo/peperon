@@ -1,4 +1,5 @@
 import { type EdgeExpression, type NodeStatement, type Program, type Statement } from "../ast/ast.js";
+import { isInInt32 } from "../utils/isInInt32.js";
 import { EvaluatorError } from "./errors.js";
 
 type Node = {
@@ -153,6 +154,21 @@ export class Evaluator {
   }
 
   /**
+   * ノードの値を更新し、32bit整数の範囲を超えていないことを確認する。
+   */
+  private updateNodeValue(node: Node, value: number): void {
+    node.value = value;
+    if (!isInInt32(node.value)) {
+      throw new EvaluatorError(
+        `Node ${node.name} value is outside the 32-bit integer range.`,
+        {line: 1, column: 1},
+        "integer overflow",
+        "INTEGER_OVERFLOW",
+      );
+    }
+  }
+
+  /**
    * グラフに基づき、計算を1ステップ進める。
    */
   proceed(stdOut: (message: string) => void): void {
@@ -180,11 +196,11 @@ export class Evaluator {
       for (const dest of destinations) {
         const destNode = this.nodesByPriority.find(node => node.name === dest.nodeName);
         if (destNode) {
-          destNode.value = destNode.value + dest.weight;
+          this.updateNodeValue(destNode, destNode.value + dest.weight);
         }
       }
       // actorNodeの値を1減らす。
-      actorNode.value--;
+      this.updateNodeValue(actorNode, actorNode.value - 1);
 
       // 各ノードの値を、stdOutを使って1行で出力する。
       stdOut(this.nodesByPriority.map(node => `${node.name}: ${node.value}`).join(" "));
