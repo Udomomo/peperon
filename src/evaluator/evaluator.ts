@@ -29,18 +29,18 @@ export class Evaluator {
 
   outputNodeName: string = "";
 
-  evaluate(program: Program): number {
+  evaluate(program: Program, stdOut: (message: string) => void): number {
     const statements = program.statements;
     this.buildGraph(statements);
 
-    this.proceed();
+    this.proceed(stdOut);
     return this.nodesByPriority.find(node => node.name === this.outputNodeName)?.value ?? 0;
   }
 
   /**
    * statementを解釈してグラフを作る。
    */
-  buildGraph(statements: Statement[]): void {
+  private buildGraph(statements: Statement[]): void {
     const nodes: Node[] = [];
 
     // interpretNodeStatement内で、priorityの重複チェック用途のみに使う配列。
@@ -63,7 +63,7 @@ export class Evaluator {
   /**
    * node定義のstatementを1行ずつ解釈する。
    */
-  interpretNodeStatement(statement: NodeStatement, existingPriorities: number[]): Node {
+  private interpretNodeStatement(statement: NodeStatement, existingPriorities: number[]): Node {
     if (this.graph.has(statement.name)) {
       throw new EvaluatorError(
         `Node ${statement.name} is already defined.`,
@@ -95,7 +95,7 @@ export class Evaluator {
     }
     const node = {
       name: statement.name,
-      value: statement.priority.value,
+      value: statement.initValue,
       priority: statement.priority.value,
     };
     this.graph.set(statement.name, []);
@@ -105,7 +105,7 @@ export class Evaluator {
   /**
    * operationのstatementを1行ずつ解釈する。
    */
-  interpretEdgeExpression(expression: EdgeExpression): void {
+  private interpretEdgeExpression(expression: EdgeExpression): void {
     if (!this.graph.has(expression.from)) {
       throw new EvaluatorError(
         `Node ${expression.from} is not defined.`,
@@ -141,7 +141,7 @@ export class Evaluator {
   /**
    * グラフに基づき、計算を1ステップ進める。
    */
-  proceed(): void {
+  proceed(stdOut: (message: string) => void): void {
     let counter = 0;
 
     while (true) {
@@ -169,6 +169,11 @@ export class Evaluator {
           destNode.value = destNode.value + dest.weight;
         }
       }
+      // actorNodeの値を1減らす。
+      actorNode.value--;
+
+      // 各ノードの値を、stdOutを使って1行で出力する。
+      stdOut(this.nodesByPriority.map(node => `${node.name}: ${node.value}`).join(" "));
 
       counter++;
     }
