@@ -70,8 +70,8 @@ export class Evaluator {
       }
     }
 
-    // 作ったノードを優先度が高い順に並べて記録する。
-    this.nodesByPriority = nodes.sort((a, b) => b.priority - a.priority);
+    // 作ったノードを優先度の値が小さい順に並べて記録する。
+    this.nodesByPriority = nodes.sort((a, b) => a.priority - b.priority);
   }
 
   /**
@@ -168,7 +168,7 @@ export class Evaluator {
         );
       }
 
-      // 優先度が高いノードから順に確認。
+      // 優先度の値が小さいノードから順に確認。
       // ノードの値が正の数であり、graph上にdestを持っている場合、そのnodeが次の操作対象となる。もしそのようなnodeがなければ終了する。
       const actorNode = this.nodesByPriority.find(node => node.value > 0 && (this.graph.get(node.name)?.length ?? 0) > 0);
       if (!actorNode) {

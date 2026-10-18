@@ -20,9 +20,9 @@ function expectEvaluatorError(evaluator: Evaluator, program: Program, code: stri
 describe("グラフの評価", () => {
   test("グラフを構築して評価できること", () => {
     const lexer = new Lexer(`
-      input A init 3 @100
-      node B init 2 @10
-      output C @1
+      input A init 3 @10
+      node B init 2 @100
+      output C @1000
       A ->+ B
       B ->+ C
     `);
@@ -37,9 +37,9 @@ describe("グラフの評価", () => {
 
   test("inputが複数あるグラフを構築して評価できること", () => {
     const lexer = new Lexer(`
-      input A init 3 @3
-      input B init 2 @2
-      output C @1
+      input A init 3 @2
+      input B init 2 @3
+      output C @4
       A ->+ C
       B ->+ C
     `);
@@ -54,10 +54,10 @@ describe("グラフの評価", () => {
 
   test("inputから+と-が別々のノードに出ているグラフを評価できること", () => {
     const lexer = new Lexer(`
-      input A init 3 @3
+      input A init 3 @1
       node B init 2 @2
-      node C init 4 @1
-      output D @0
+      node C init 4 @3
+      output D @4
       A ->+ B
       A ->- C
       B ->+ D
@@ -74,9 +74,9 @@ describe("グラフの評価", () => {
 
   test("output以外が正の数ではないグラフは実行されないこと", () => {
     const lexer = new Lexer(`
-      input A init 0 @3
+      input A init 0 @1
       node B init -1 @2
-      output C @1
+      output C @3
       A ->+ B
       A ->- C
     `);
@@ -89,11 +89,29 @@ describe("グラフの評価", () => {
     expect(result).toBe(0);
   });
 
+  test("優先度が正しく判定されること", () => {
+    const lexer = new Lexer(`
+      input A init 4 @1
+      node B init 3 @2
+      output C @3
+      A ->- B
+      B ->+ C
+    `);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    const evaluator = new Evaluator();
+
+    const result = evaluator.evaluate(program, console.log);
+    // Aが先に動くので、Bの値が0以下となり、Cの値は変化しない。
+    expect(result).toBe(0);
+  });
+
   test("ループが発生するグラフはエラーになること", () => {
     const lexer = new Lexer(`
-      input A init 1 @3
-      node B init 0 @2
-      output C @1
+      input A init 1 @2
+      node B init 0 @3
+      output C @4
       A ->+ B
       B ->+ A
       B ->+ C
@@ -110,9 +128,9 @@ describe("グラフの評価", () => {
 describe("グラフ構築失敗のケース", () => {
   test("同じ優先度のノードがある場合はエラーになること", () => {
     const lexer = new Lexer(`
-      input A init 1 @3
-      node B init 0 @3
-      output C @1
+      input A init 1 @1
+      node B init 0 @1
+      output C @3
       A ->+ B
       B ->+ C
     `);
@@ -126,7 +144,7 @@ describe("グラフ構築失敗のケース", () => {
 
   test("outputノードがない場合はエラーになること", () => {
     const lexer = new Lexer(`
-      input A init 1 @3
+      input A init 1 @1
       node B init 0 @2
       A ->+ B
     `);
@@ -140,9 +158,9 @@ describe("グラフ構築失敗のケース", () => {
 
   test("outputノードが複数ある場合はエラーになること", () => {
     const lexer = new Lexer(`
-      input A init 1 @3
+      input A init 1 @1
       output B @2
-      output C @1
+      output C @3
       A ->+ B
       A ->+ C
     `);
@@ -156,9 +174,9 @@ describe("グラフ構築失敗のケース", () => {
 
   test("同じ名前のノードがある場合はエラーになること", () => {
     const lexer = new Lexer(`
-      input A init 1 @3
+      input A init 1 @1
       node A init 0 @2
-      output C @1
+      output C @3
       A ->+ C
     `);
     const parser = new Parser(lexer);
@@ -171,7 +189,7 @@ describe("グラフ構築失敗のケース", () => {
 
   test("未宣言のノードがoperationで使われている場合はエラーになること", () => {
     const lexer = new Lexer(`
-      input A init 1 @3
+      input A init 1 @1
       output B @2
       A ->+ C
     `);
