@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "build/index.js",
+  "files": [
+    "build"
+  ],
   "bin": {
     "peperon": "build/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc -p .",
+    "prepublishOnly": "pnpm build",
     "start": "node build/index.js",
     "test": "vitest",
     "test:once": "vitest run"
