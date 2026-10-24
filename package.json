@@ -4,7 +4,8 @@
   "description": "",
   "main": "build/index.js",
   "files": [
-    "build"
+    "build/**/*.js",
+    "!build/**/*.spec.js"
   ],
   "bin": {
     "peperon": "build/index.js"
